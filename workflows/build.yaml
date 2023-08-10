@@ -1,0 +1,48 @@
+name: Main Release
+
+
+on:
+  push:
+    paths:
+    # run when unity asset is changed, or CI is updated
+      - 'Assets/**'
+      - 'Packages/**'  
+      - 'ProjectSettings/**'  
+      - '.releaserc.yml'
+      - '.github/workflows/build.yml'
+
+
+jobs:
+  Publish:
+    if: github.ref == 'refs/heads/master'
+    name: Publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v1
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+
+      - name: Release
+        uses: cycjimmy/semantic-release-action@v3
+        id: semantic
+        with:
+          extra_plugins: |
+            @semantic-release/exec
+            @semantic-release/changelog
+            @semantic-release/git
+          branch: master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # upload next version so that sonar job can use it
+      - run: echo ${{ steps.semantic.outputs.new_release_version }} > SemanticVersion.txt
+      - name: Archive Version
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: SemanticVersion
+          path: SemanticVersion.txt
