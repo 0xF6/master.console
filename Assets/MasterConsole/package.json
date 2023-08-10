@@ -1,0 +1,18 @@
+{
+    "name": "com.0xf6.masterconsole",
+    "displayName": "MasterConsole",
+    "version": "1.2.1",
+    "unity": "2022.3",
+    "description": "Master Console is a solution for fluent variantion creation of commands and other utils for console",
+    "author": "Yuuki Wesp",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/0xF6/master.console.git"
+    },
+    "dependencies": {
+        "com.cysharp.unitask": "2.3.3",
+        "com.neuecc.unirx": "7.1.0",
+        "com.cysharp.zlogger": "1.7.0",
+        "com.cysharp.zstring": "2.5.0"
+    }
+}
