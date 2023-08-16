@@ -2,10 +2,19 @@
 
 ### Dependency
 `com.cysharp.unitask`   
-`com.neuecc.unirx`   
-`com.cysharp.zlogger`    
-`com.cysharp.zstring`   
-`Microsoft.Extensions.DependencyInjection`  
-`Microsoft.Extensions.Configuration`   
-`Microsoft.Extensions.Logging`  
-`Microsoft.Extensions.Options`   
+`org.nuget.system.runtime.compilerservices.unsafe`   
+`org.nuget.microsoft.extensions.logging.abstractions`  
+`jp.hadashikick.vcontainer`   
+
+
+### Install 
+
+Установить пакеты через `openupm`
+
+```sh
+# in project root folder
+openupm add org.nuget.microsoft.extensions.logging.abstractions
+openupm add org.nuget.system.runtime.compilerservices.unsafe
+openupm add com.cysharp.unitask
+openupm add jp.hadashikick.vcontainer
+```

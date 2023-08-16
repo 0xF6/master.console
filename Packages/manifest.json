@@ -1,11 +1,15 @@
 {
   "dependencies": {
+    "com.cysharp.unitask": "2.3.3",
     "com.unity.collab-proxy": "2.0.5",
     "com.unity.feature.development": "1.0.1",
     "com.unity.textmeshpro": "3.0.6",
     "com.unity.timeline": "1.7.5",
     "com.unity.ugui": "1.0.0",
     "com.unity.visualscripting": "1.8.0",
+    "jp.hadashikick.vcontainer": "1.13.2",
+    "org.nuget.microsoft.extensions.logging.abstractions": "7.0.1",
+    "org.nuget.system.runtime.compilerservices.unsafe": "6.0.0",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.androidjni": "1.0.0",
     "com.unity.modules.animation": "1.0.0",
@@ -36,11 +40,7 @@
     "com.unity.modules.video": "1.0.0",
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
-    "com.unity.modules.xr": "1.0.0",
-    "com.cysharp.zstring": "2.5.0",
-    "com.cysharp.unitask": "2.3.3",
-    "com.cysharp.zlogger": "1.7.0",
-    "jp.hadashikick.vcontainer": "1.13.2"
+    "com.unity.modules.xr": "1.0.0"
   },
   "scopedRegistries": [
     {
@@ -51,7 +51,12 @@
         "com.cysharp.zlogger",
         "com.cysharp.zstring",
         "com.openupm",
-        "jp.hadashikick.vcontainer"
+        "jp.hadashikick.vcontainer",
+        "org.nuget.microsoft.extensions.logging.abstractions",
+        "org.nuget.system.buffers",
+        "org.nuget.system.memory",
+        "org.nuget.system.numerics.vectors",
+        "org.nuget.system.runtime.compilerservices.unsafe"
       ]
     }
   ]

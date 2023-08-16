@@ -7,20 +7,6 @@
       "dependencies": {},
       "url": "https://package.openupm.com"
     },
-    "com.cysharp.zlogger": {
-      "version": "1.7.0",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://package.openupm.com"
-    },
-    "com.cysharp.zstring": {
-      "version": "2.5.0",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://package.openupm.com"
-    },
     "com.unity.collab-proxy": {
       "version": "2.0.5",
       "depth": 0,
@@ -170,6 +156,48 @@
       "dependencies": {
         "com.unity.nuget.mono-cecil": "1.10.1"
       },
+      "url": "https://package.openupm.com"
+    },
+    "org.nuget.microsoft.extensions.logging.abstractions": {
+      "version": "7.0.1",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "org.nuget.system.buffers": "4.5.1",
+        "org.nuget.system.memory": "4.5.5"
+      },
+      "url": "https://package.openupm.com"
+    },
+    "org.nuget.system.buffers": {
+      "version": "4.5.1",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://package.openupm.com"
+    },
+    "org.nuget.system.memory": {
+      "version": "4.5.5",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {
+        "org.nuget.system.buffers": "4.5.1",
+        "org.nuget.system.numerics.vectors": "4.4.0",
+        "org.nuget.system.runtime.compilerservices.unsafe": "4.5.3"
+      },
+      "url": "https://package.openupm.com"
+    },
+    "org.nuget.system.numerics.vectors": {
+      "version": "4.4.0",
+      "depth": 2,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://package.openupm.com"
+    },
+    "org.nuget.system.runtime.compilerservices.unsafe": {
+      "version": "6.0.0",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
       "url": "https://package.openupm.com"
     },
     "com.unity.modules.ai": {
