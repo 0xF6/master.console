@@ -74,7 +74,7 @@ ctx.Command<SteamId>("net.connect", (id) => client.ConnectTo(id));
 
 ### About generic parameter in `ctx.Command<>`
 
-This method uses `ConvertableFromString<T>.Convertor` to convert input or output data
+This method uses `ConvertableFromString<T>.Convertor` to convert input or output data   
 For enumeration types (type.IsEnum), `EnumConverter<T>` is automatically registered
 
 
