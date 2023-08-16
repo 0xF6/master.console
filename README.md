@@ -9,7 +9,7 @@
 
 ### Install 
 
-Установить пакеты через `openupm`
+Install dependencies over `openupm`
 
 ```sh
 # in project root folder
