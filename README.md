@@ -26,6 +26,39 @@ openupm add jp.hadashikick.vcontainer
 
 #### Register variable
 
+First you are need create command class
+```C#
+public class UtilsCommands : CommandSilo
+{
+    public override void Create(CommandHandlerContext context)
+    {
+        // context.Command<int>(...)
+    }
+}
+```
+
+after you are need to register your command class in VContainer flow
+
+```C#
+public class GameLifeScope : LifetimeScope
+{
+    protected override void Configure(IContainerBuilder builder)
+    {
+        builder.Register...
+
+        builder.UseCommands(x => {
+            x.Use<GraphicsCommands>();
+            x.Use<SteamCommands>();
+            x.Use<GameStateFeature.Commands>();
+            x.Use<LobbyFeature.LobbyCommand>();
+        });
+
+        base.Configure(builder);
+    }
+}
+```
+And describe command...
+
 ```C#
 context.Variable("graphic.camera.distance", 
     ( ) => this.camera.farClipPlane,
