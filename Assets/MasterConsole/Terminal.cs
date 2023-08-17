@@ -105,6 +105,7 @@ namespace UnityEngine.Terminal
             SetupWindow();
             SetupInput();
             SetupLabels();
+            
 
             this.Context.Shell.RegisterCommands();
 
@@ -125,8 +126,6 @@ namespace UnityEngine.Terminal
                 SetState(TerminalState.OpenFull);
                 initialOpen = true;
             }
-
-            if (Settings.ShowGUIButtons) DrawGuiButtons();
 
             if (IsClosed)
                 return;
@@ -149,28 +148,30 @@ namespace UnityEngine.Terminal
                 normal = { background = backgroundTexture, textColor = Settings.ForegroundColor },
                 padding = new RectOffset(4, 4, 4, 4),
                 font = Settings.ConsoleFont
-            };
+            }.DpToPixel();
         }
 
         private void SetupLabels() => labelStyle = new GUIStyle 
         {
             font = Settings.ConsoleFont, 
             normal = { textColor = Settings.ForegroundColor }, 
-            wordWrap = true
-        };
+            wordWrap = true,
+            fontSize = Settings.FontSize
+        }.DpToPixel();
 
         private void SetupInput()
         {
             inputStyle = new GUIStyle
             {
-                padding = new RectOffset(4, 4, 4, 4),
+                padding = new RectOffset(4, 4, 4, 4).DpToPixel(),
                 font = Settings.ConsoleFont,
-                fixedHeight = Settings.ConsoleFont.fontSize * 1.6f,
+                fixedHeight = (Settings.FontSize * 1.2f) * 1.6f,
                 normal =
                 {
                     textColor = Settings.InputColor
-                }
-            };
+                },
+                fontSize = (int)(Settings.FontSize * 1.2f)
+            }.DpToPixel();
 
             var darkBackground = new Color
             {
@@ -243,9 +244,6 @@ namespace UnityEngine.Terminal
                 initialOpen = false;
             }
 
-            if (Settings.ShowGUIButtons && GUILayout.Button("| run", inputStyle, GUILayout.Width(Screen.width / 10)))
-                EnterCommand();
-
             GUILayout.EndHorizontal();
             GUILayout.EndVertical();
         }
@@ -255,28 +253,10 @@ namespace UnityEngine.Terminal
             foreach (var log in this.Buffer.Logs)
             {
                 labelStyle.normal.textColor = GetLogColor(log.Type);
-                GUILayout.Label(log.Message, labelStyle);
+                GUILayout.Label(log.Message, labelStyle.DpToPixel());
             }
         }
-
-        public void DrawGuiButtons()
-        {
-            var size = Settings.ConsoleFont.fontSize;
-            var xPosition = Settings.RightAlignButtons ? Screen.width - 7 * size : 0;
-
-            // 7 is the number of chars in the button plus some padding, 2 is the line height.
-            // The layout will resize according to the font size.
-            GUILayout.BeginArea(new Rect(xPosition, currentOpenT, 7 * size, size * 2));
-            GUILayout.BeginHorizontal();
-
-            if (GUILayout.Button("Small", windowStyle))
-                ToggleState(TerminalState.OpenSmall);
-            else if (GUILayout.Button("Full", windowStyle)) ToggleState(TerminalState.OpenFull);
-
-            GUILayout.EndHorizontal();
-            GUILayout.EndArea();
-        }
-
+        
         private void HandleOpenness()
         {
             var dt = Settings.ToggleSpeed * Time.unscaledDeltaTime;
@@ -317,7 +297,7 @@ namespace UnityEngine.Terminal
             var headText = commandText;
             var formatWidth = 0;
 
-            var completionBuffer = this.Autocomplete.Complete(ref headText, ref formatWidth);
+            var completionBuffer = this.Autocomplete.Complete(ref headText, ref formatWidth, out var disposer);
             var completionLength = completionBuffer.Length;
 
             if (completionLength != 0) commandText = headText;
@@ -330,8 +310,11 @@ namespace UnityEngine.Terminal
 
             foreach (var completion in completionBuffer)
             {
+                if (string.IsNullOrEmpty(completion)) continue;
                 logBuffer.Append(completion.PadRight(formatWidth + 4));
             }
+
+            disposer.Dispose();
 
             Logger.LogInformation("{buffer}", logBuffer);
             scrollPosition.y = int.MaxValue;

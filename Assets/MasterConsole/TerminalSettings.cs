@@ -4,7 +4,7 @@
     using UnityEngine;
 
     [Serializable]
-    public class TerminalSettings : ScriptableObject
+    public class TerminalSettings 
     {
         [Header("Window")]
         [Range(0, 1)]
@@ -22,14 +22,13 @@
         public string ToggleFullHotkey = "#`";
         [SerializeField] 
         public int BufferSize = 512;
-
+        [SerializeField]
+        public int FontSize = 15;
         [Header("Input")]
         [SerializeField]
         public Font ConsoleFont;
         [SerializeField]
         public string InputCaret = ">";
-        [SerializeField]
-        public bool ShowGUIButtons = false;
         [SerializeField]
         public bool RightAlignButtons = false;
 
@@ -39,7 +38,7 @@
         [Range(0, 1)]
         [SerializeField] public float InputAlpha = 0.5f;
 
-        [SerializeField] public Color BackgroundColor = Color.black;
+        [SerializeField] public Color BackgroundColor = new Color(255, 255, 255, 135);
         [SerializeField] public Color ForegroundColor = Color.white;
         [SerializeField] public Color ShellColor = Color.white;
         [SerializeField] public Color InputColor = Color.cyan;
