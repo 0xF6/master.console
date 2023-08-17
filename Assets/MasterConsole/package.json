@@ -1,9 +1,9 @@
 {
     "name": "com.0xf6.masterconsole",
     "displayName": "MasterConsole",
-    "version": "1.2.1",
+    "version": "1.1.0",
     "unity": "2022.3",
-    "description": "Master Console is a solution for fluent variantion creation of commands and other utils for console",
+    "description": "Master console is a package that adds the developer console, as well as the necessary functionality for registering commands, variables, etc.",
     "author": "Yuuki Wesp",
     "repository": {
         "type": "git",
