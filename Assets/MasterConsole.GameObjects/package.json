@@ -1,0 +1,17 @@
+{
+    "name": "com.0xf6.masterconsole.gameobjects",
+    "displayName": "MasterConsole GameObjects",
+    "version": "1.2.1",
+    "unity": "2022.3",
+    "description": "Extensions with manipulation of GameObjects for MasterConsole",
+    "author": "Yuuki Wesp",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/0xF6/master.console.git"
+    },
+    "dependencies": {
+        "com.cysharp.unitask": "2.3.3",
+        "org.nuget.microsoft.extensions.logging.abstractions": "7.0.1",
+        "org.nuget.system.runtime.compilerservices.unsafe": "6.0.0"
+    }
+}
