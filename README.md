@@ -46,7 +46,9 @@ public class GameLifeScope : LifetimeScope
     {
         builder.Register...
 
-        builder.UseCommands(x => {
+
+        builder.UseTerminal(Settings, x => {
+            x.UseGameObjectCommands(); // with masterconsole.gameobjects package
             x.Use<GraphicsCommands>();
             x.Use<SteamCommands>();
             x.Use<GameStateFeature.Commands>();
