@@ -37,7 +37,6 @@ namespace UnityEngine.Terminal
 #if !DISABLE_DEFAULT_UNITY_CONVERTERS
             ConvertableFromString<Vector3>.Convertor = new Convertable_Vector3();
             ConvertableFromString<Color>.Convertor = new Convertable_Color();
-            ConvertableFromString<GameObject>.Convertor = null;
 #endif
         }
     }

@@ -30,10 +30,6 @@ namespace UnityEngine.Terminal
             ctx.Command<GameObject>("go.hierarchy", x => "not implemented");
             ctx.Command<GameObject, Type>("go.inject", (x, y) => x.AddComponent(y));
             ctx.Command<GameObject, Type>("go.eject", (x, y) => Object.Destroy(x.GetComponent(y)));
-
-
-            ctx.Variable("graphics.vsync", () => QualitySettings.vSyncCount, x => QualitySettings.vSyncCount = x);
-            ctx.Variable("screen.dpi", () => Screen.dpi);
         }
     }
 

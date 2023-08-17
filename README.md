@@ -117,14 +117,26 @@ ConvertableFromString<byte>.Convertor // '25'
 ConvertableFromString<sbyte>.Convertor // '-25'
 ConvertableFromString<short>.Convertor // '4884'
 ConvertableFromString<string>.Convertor // 'the string'
-ConvertableFromString<Vector3>.Convertor // '[1.04, 15, 25]' or '(1.2, 55, 1)'
+ConvertableFromString<Vector3>.Convertor // '[1.04, 15, 25]' or '(1.2, 55, 1)', can disable by DISABLE_DEFAULT_UNITY_CONVERTERS swtich
 ConvertableFromString<float>.Convertor  // '43.2'
 ConvertableFromString<long>.Convertor // '492384928349'
 ConvertableFromString<int>.Convertor  // '5234534'
 ConvertableFromString<bool>.Convertor // 'true', 'enabled', 'up', 'down'
 ConvertableFromString<DateTimeOffset>.Convertor // any correct string for DateTimeOffset.Parse
 ConvertableFromString<decimal>.Convertor // '532e15'
-ConvertableFromString<Color>.Convertor // '[1, 0.5, 0.1, 1]' or '(0, 1, 1, 1)'
+ConvertableFromString<Color>.Convertor // '[1, 0.5, 0.1, 1]' or '(0, 1, 1, 1)', can disable by DISABLE_DEFAULT_UNITY_CONVERTERS swtich
+
+ConvertableFromString<TimeSpan>.Convertor // any correct string for TimeSpan.Parse 
+ConvertableFromString<Guid>.Convertor // guid
+ConvertableFromString<Index>.Convertor // '^15' or '15'
+ConvertableFromString<Range>.Convertor // '0.15'
+ConvertableFromString<Type>.Convertor // UnityEngine.GameObject or etc correct string for Type.Find
+
+
+// in masterconsole.gameobjects package
+ConvertableFromString<GameObject>.Convertor // GoQL query and take first object
+ConvertableFromString<GameObject[]>.Convertor // GoQL query and get all queried objects
+ConvertableFromString<List<GameObject>>.Convertor // same but list type
 ```
 
 #### Custom converter
@@ -148,3 +160,43 @@ public static class SteamIdAutoRegistration
     }
 }
 ```
+
+
+
+### About camera resolving
+
+
+There is an `ICameraResolver` interface, it describes the method of getting the camera in the right way.    
+In the static class a `CameraResolver.Resolver` field, its default value is `CameraResolverFromContainer`.   
+`CameraResolverFromContainer` tries to extract an instance of `Camera` from `IObjectResolver`, if it fails, it accesses `CameraResolverFromContainer.FallbackResolver` which by default is `MainCameraResolver`.    
+`MainCameraResolver` gets the camera via `Camera.main`
+
+
+
+### About default commands
+
+
+#### default commands
+```bash
+clear # clear console
+exit # call application.quit()
+```
+
+Disabled by DISABLE_DEFAULT_COMMANDS directive switch
+
+#### commands in masterconsole.gameobjects
+
+GameObject commands has been use GoQL language for querying, [learn more](https://docs.unity3d.com/Packages/com.unity.selection-groups@0.8/manual/goql.html)
+
+```bash
+go.query *Head # return information about all quered objects
+go.destroy * # destroy all quered objects
+go.active * true # set active all objects
+go.message <t:Camera> FooBarMethod # call SendMessage in all quered objects
+go.inject "Traps/[0,1,5]" Foobar.GameComponent # add component to quered objects by type name
+```
+
+
+#### about formatting gameObject
+
+Formatter interface is `IGameObjectFormatter`, there is a `GameObjectFormatter` field in `GameObjectCommands` class with default value of `DefaultGameObjectFormatter`, you can implement custom formatter and set to this field.
