@@ -1,3 +1,7 @@
+## 1.3.0
+
+- [fix] bumped version...
+
 ## 1.1.0
 
 - [fix] DPI problem
