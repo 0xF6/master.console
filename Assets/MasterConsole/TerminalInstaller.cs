@@ -7,8 +7,13 @@
 
     public static class TerminalInstaller
     {
-        public static IContainerBuilder UseTerminal(this IContainerBuilder builder, IWithTerminalFeatureSettings settings)
+        public static IContainerBuilder UseTerminal(this IContainerBuilder builder, IWithTerminalFeatureSettings settings, Action<ICommandBuilder> cmdBuilder = null)
         {
+            builder.UseCommands(x => {
+                x.Use<DefaultTerminalCommands>();
+                cmdBuilder?.Invoke(x);
+            });
+
             builder.RegisterInstance(settings);
             builder.RegisterInstance(settings.TerminalSettings);
             builder.RegisterInstance(new LogBuffer(settings.TerminalSettings.BufferSize));
@@ -34,5 +39,21 @@
     public interface IWithTerminalFeatureSettings
     {
         TerminalSettings TerminalSettings { get; }
+    }
+
+    public class DefaultTerminalCommands : CommandSilo
+    {
+        private readonly LogBuffer buffer;
+
+        public DefaultTerminalCommands(LogBuffer buffer) 
+            => this.buffer = buffer;
+
+        public override void Create(CommandHandlerContext context)
+        {
+#if !DISABLE_DEFAULT_COMMANDS
+            context.Command("clear", this.buffer.Clear);
+            context.Command("exit", Application.Quit);
+#endif
+        }
     }
 }
