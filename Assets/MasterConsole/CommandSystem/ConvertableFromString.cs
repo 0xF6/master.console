@@ -13,38 +13,95 @@ namespace UnityEngine.Terminal
     
     public static class ConvertableFromStringRuntimeInit
     {
-        [RuntimeInitializeOnLoadMethod]
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         public static void Init()
         {
+#if !DISABLE_DEFAULT_DOTNET_CONVERTERS
             ConvertableFromString<byte>.Convertor = new Convertable_Byte();
             ConvertableFromString<sbyte>.Convertor = new Convertable_SByte();
             ConvertableFromString<short>.Convertor = new Convertable_Short();
             ConvertableFromString<string>.Convertor = new Convertable_String();
-            ConvertableFromString<Vector3>.Convertor = new Convertable_Vector3();
             ConvertableFromString<float>.Convertor = new Convertable_Float();
             ConvertableFromString<long>.Convertor = new Convertable_Long();
             ConvertableFromString<int>.Convertor = new Convertable_Int();
             ConvertableFromString<bool>.Convertor = new Convertable_Bool();
             ConvertableFromString<DateTimeOffset>.Convertor = new Convertable_DateTime();
             ConvertableFromString<decimal>.Convertor = new Convertable_Decimal();
+
+            ConvertableFromString<TimeSpan>.Convertor = new Convertable_TimeSpan();
+            ConvertableFromString<Guid>.Convertor = new Convertable_Guid();
+            ConvertableFromString<Index>.Convertor = new Convertable_Index();
+            ConvertableFromString<Range>.Convertor = new Convertable_Range();
+            ConvertableFromString<Type>.Convertor = new Convertable_Type();
+#endif
+#if !DISABLE_DEFAULT_UNITY_CONVERTERS
+            ConvertableFromString<Vector3>.Convertor = new Convertable_Vector3();
             ConvertableFromString<Color>.Convertor = new Convertable_Color();
-            //ConvertableFromString<AppId>.Convertor = new Convertable_AppId();
-            //ConvertableFromString<SteamId>.Convertor = new Convertable_SteamId();
+            ConvertableFromString<GameObject>.Convertor = null;
+#endif
         }
     }
 
+    public class Convertable_Type : IConvertableFromString<Type>
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Type ConvertFromString(string str)
+            => Type.GetType(str);
 
-    //public class Convertable_AppId : IConvertableFromString<AppId>
-    //{
-    //    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    //    public AppId ConvertFromString(string str)
-    //        => uint.Parse(str);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        object IConvertableFromString.ConvertFromString(string str)
+            => this.ConvertFromString(str);
+    }
 
-    //    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    //    object IConvertableFromString.ConvertFromString(string str)
-    //        => this.ConvertFromString(str);
-    //}
+    public class Convertable_Index : IConvertableFromString<Index>
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Index ConvertFromString(string str) 
+            => str.StartsWith('^') ? 
+                Index.FromEnd(int.Parse(str.Trim('^'))) : 
+                Index.FromStart(int.Parse(str.Trim()));
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        object IConvertableFromString.ConvertFromString(string str)
+            => this.ConvertFromString(str);
+    }
+
+    public class Convertable_Range : IConvertableFromString<Range>
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Range ConvertFromString(string str)
+        {
+            var (start, end) = str.Split(',').Unpack2(int.Parse);
+            return new Range(Index.FromStart(start), Index.FromEnd(end));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        object IConvertableFromString.ConvertFromString(string str)
+            => this.ConvertFromString(str);
+    }
+
+    public class Convertable_Guid : IConvertableFromString<Guid>
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Guid ConvertFromString(string str)
+            => Guid.Parse(str);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        object IConvertableFromString.ConvertFromString(string str)
+            => this.ConvertFromString(str);
+    }
+
+    public class Convertable_TimeSpan : IConvertableFromString<TimeSpan>
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public TimeSpan ConvertFromString(string str)
+            => TimeSpan.Parse(str);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        object IConvertableFromString.ConvertFromString(string str)
+            => this.ConvertFromString(str);
+    }
+    
     public class Convertable_Color : IConvertableFromString<Color>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -146,15 +203,6 @@ namespace UnityEngine.Terminal
             => this.ConvertFromString(str);
     }
 
-    //public class Convertable_SteamId : IConvertableFromString<SteamId>
-    //{
-    //    public SteamId ConvertFromString(string str)
-    //        => ulong.Parse(str);
-
-    //    object IConvertableFromString.ConvertFromString(string str)
-    //        => this.ConvertFromString(str);
-    //}
-
     public class Convertable_String : IConvertableFromString<string>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -219,6 +267,9 @@ namespace UnityEngine.Terminal
 
     public static class TupleEx
     {
+        public static (T, T) Unpack2<T>(this T[] arr) => (arr[0], arr[1]);
+        public static (X, X) Unpack2<T, X>(this T[] arr, Func<T, X> convert) => (convert(arr[0]), convert(arr[1]));
+
         public static (T, T, T) Unpack3<T>(this T[] arr) => (arr[0], arr[1], arr[2]);
         public static (X, X, X) Unpack3<T, X>(this T[] arr, Func<T, X> convert) => (convert(arr[0]), convert(arr[1]), convert(arr[2]));
     }
