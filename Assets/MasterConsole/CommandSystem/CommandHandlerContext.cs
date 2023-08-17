@@ -10,14 +10,14 @@
     public class CommandHandlerContext
     {
         private readonly ILogger<CommandHandlerContext> logger;
-        private readonly Dictionary<string, CommandExecutionData> Commands = new();
-        private readonly Dictionary<string, VariableExecutionData> Variables = new();
+        private readonly Dictionary<string, CommandExecutionData> commands = new();
+        private readonly Dictionary<string, VariableExecutionData> variables = new();
 
 
         public Dictionary<string, CommandExecutionData> GetCommands()
-            => this.Commands.ToDictionary(x => x.Key, x => x.Value);
+            => this.commands.ToDictionary(x => x.Key, x => x.Value);
         public Dictionary<string, VariableExecutionData> GetVariables()
-            => this.Variables.ToDictionary(x => x.Key, x => x.Value);
+            => this.variables.ToDictionary(x => x.Key, x => x.Value);
 
         public CommandHandlerContext(ILogger<CommandHandlerContext> logger) 
             => this.logger = logger;
@@ -149,6 +149,21 @@
                 return d;
             }
 
+            public static CommandExecutionData Create<T1, T2>(string query, Action<T1, T2> data, ILogger<CommandHandlerContext> logger)
+            {
+                var d = new CommandExecutionData(query, (x) => {
+                    Debug.Assert(x[0] is T1, "x[0] is T1");
+                    Debug.Assert(x[1] is T2, "x[0] is T1");
+                    data((T1)x[0], (T2)x[1]);
+                    return null;
+                }, logger);
+                Debug.Assert(ConvertableFromString<T1>.Convertor != null, $"ConvertableFromString<{typeof(T1).FullName}>.Convertor != null");
+                Debug.Assert(ConvertableFromString<T2>.Convertor != null, $"ConvertableFromString<{typeof(T2).FullName}>.Convertor != null");
+                d.ArgumentCaster.Add(ConvertableFromString<T1>.Convertor);
+                d.ArgumentCaster.Add(ConvertableFromString<T2>.Convertor);
+                return d;
+            }
+
             public static CommandExecutionData Create<T1, T2, T3>(string query, Func<T1, T2, T3, object> data, ILogger<CommandHandlerContext> logger)
             {
                 var d = new CommandExecutionData(query, (x) => {
@@ -209,7 +224,7 @@
         {
             if (typeof(T1).IsEnum && ConvertableFromString<T1>.Convertor is null)
                 ConvertableFromString<T1>.Convertor = new EnumConverter<T1>();
-            this.Variables.Add(query, VariableExecutionData.Create(query, getter, setter, this.logger));
+            this.variables.Add(query, VariableExecutionData.Create(query, getter, setter, this.logger));
             return this;
         }
 
@@ -226,19 +241,26 @@
             if (typeof(T1).IsEnum && ConvertableFromString<T1>.Convertor is null)
                 ConvertableFromString<T1>.Convertor = new EnumConverter<T1>();
 
-            this.Commands.Add(query, CommandExecutionData.Create(query, executor, this.logger));
+            this.commands.Add(query, CommandExecutionData.Create(query, executor, this.logger));
             return this;
         }
 
+
+        public CommandHandlerContext Command(string query, Action executor)
+        {
+            this.commands.Add(query, CommandExecutionData.Create(query, executor, this.logger));
+            return this;
+        }
+        
         public CommandHandlerContext Command(string query, Func<object> executor)
         {
-            this.Commands.Add(query, CommandExecutionData.Create(query, executor, this.logger));
+            this.commands.Add(query, CommandExecutionData.Create(query, executor, this.logger));
             return this;
         }
 
         public CommandHandlerContext Command(string query, Func<UniTask> executor)
         {
-            this.Commands.Add(query, CommandExecutionData.Create(query, executor, this.logger));
+            this.commands.Add(query, CommandExecutionData.Create(query, executor, this.logger));
             return this;
         }
 
@@ -248,15 +270,22 @@
             return null;
         });
 
+
+        public CommandHandlerContext Command<T1, T2>(string query, Action<T1, T2> executor)
+        {
+            this.commands.Add(query, CommandExecutionData.Create(query, executor, this.logger));
+            return this;
+        }
+
         public CommandHandlerContext Command<T1, T2>(string query, Func<T1, T2, object> executor)
         {
-            this.Commands.Add(query, CommandExecutionData.Create(query, executor, this.logger));
+            this.commands.Add(query, CommandExecutionData.Create(query, executor, this.logger));
             return this;
         }
 
         public CommandHandlerContext Command<T1, T2, T3>(string query, Func<T1, T2, T3, object> executor)
         {
-            this.Commands.Add(query, CommandExecutionData.Create(query, executor, this.logger));
+            this.commands.Add(query, CommandExecutionData.Create(query, executor, this.logger));
             return this;
         }
 

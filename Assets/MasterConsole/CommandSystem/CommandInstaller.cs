@@ -4,7 +4,8 @@
     using System;
     using System.Collections.Generic;
     using UnityEngine;
-#if VCONTINAER_DEFINED
+    using VContainer;
+
     public static class CommandInstaller
     {
         public static IContainerBuilder UseCommands(this IContainerBuilder builder, Action<ICommandBuilder> cmdBuilder)
@@ -45,11 +46,5 @@
                 return this;
             }
         }
-    }
-#endif
-
-    public interface IConvertableFromString<out T> : IConvertableFromString
-    {
-        new T ConvertFromString(string str);
     }
 }

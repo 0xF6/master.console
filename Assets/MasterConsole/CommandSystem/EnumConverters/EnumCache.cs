@@ -3,7 +3,7 @@
     using System;
     using System.Linq;
 
-    public static class EnumCache<T>
+    internal static class EnumCache<T>
     {
         public class Cache<X>
         {
