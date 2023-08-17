@@ -34,6 +34,7 @@ MonoBehaviour:
     - com.cysharp.zlogger
     - com.cysharp.zstring
     - com.openupm
+    - com.tayx.graphy
     - jp.hadashikick.vcontainer
     - org.nuget.microsoft.extensions.logging.abstractions
     - org.nuget.system.buffers
