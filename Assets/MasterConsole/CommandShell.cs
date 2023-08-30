@@ -120,10 +120,8 @@ namespace UnityEngine.Terminal
                     pluralFix
                 );
 
-                if (command.hint != null)
-                {
+                if (!string.IsNullOrEmpty(command.hint)) 
                     this.IssuedErrorMessage += $"\n    -> Usage: {command.hint}";
-                }
 
                 return;
             }
