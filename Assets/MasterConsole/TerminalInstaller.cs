@@ -1,13 +1,12 @@
 ﻿namespace UnityEngine.Terminal
 {
     using VContainer;
-    using Microsoft.Extensions.Logging;
     using System;
 
 
     public static class TerminalInstaller
     {
-        public static IContainerBuilder UseTerminal(this IContainerBuilder builder, IWithTerminalFeatureSettings settings, Action<ICommandBuilder> cmdBuilder = null)
+        public static IContainerBuilder UseTerminal(this IContainerBuilder builder, IWithTerminalFeatureSettings settings, Action<ICommandBuilder> cmdBuilder = null, Func<ITerminalBuffer> customBuffer = null)
         {
             builder.UseCommands(x => {
                 x.Use<DefaultTerminalCommands>();
@@ -16,7 +15,18 @@
 
             builder.RegisterInstance(settings);
             builder.RegisterInstance(settings.TerminalSettings);
-            builder.RegisterInstance(new LogBuffer(settings.TerminalSettings.BufferSize));
+            if (customBuffer is null)
+                builder.RegisterInstance(new LogBuffer(settings.TerminalSettings.BufferSize)).As<ITerminalBuffer>();
+            else
+            {
+                var buffer = customBuffer();
+
+                if (buffer is null)
+                    builder.RegisterInstance(new LogBuffer(settings.TerminalSettings.BufferSize)).As<ITerminalBuffer>();
+                else
+                    builder.RegisterInstance(buffer).As<ITerminalBuffer>();
+            }
+           
             builder.Register<CommandShell>(Lifetime.Singleton);
             builder.Register<CommandHistory>(Lifetime.Singleton);
             builder.Register<CommandAutocomplete>(Lifetime.Singleton);

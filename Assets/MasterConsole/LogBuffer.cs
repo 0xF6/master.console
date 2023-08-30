@@ -1,6 +1,9 @@
 namespace UnityEngine.Terminal
 {
+    using Microsoft.Extensions.Logging;
+    using System;
     using System.Collections.Generic;
+    using System.Collections.ObjectModel;
     using UnityEngine;
     public enum TerminalLogType
     {
@@ -13,14 +16,40 @@ namespace UnityEngine.Terminal
         ShellMessage
     }
 
-    public struct LogItem
+    public interface ITerminalBuffer
     {
-        public TerminalLogType Type;
-        public string Message;
-        public string StackTrace;
+        void HandleLog(string category, string message, Exception exception, LogLevel level);
+        void HandleLog(string category, string message, LogLevel level);
+        void Clear();
+
+        IReadOnlyCollection<LogItem> GetLogItems();
     }
 
-    public class LogBuffer
+
+    public struct LogItem
+    {
+        public string FormattedPayload;
+        public readonly string CategoryName;
+        public readonly DateTimeOffset Timestamp;
+        public readonly LogLevel LogLevel;
+        public readonly Exception? Exception;
+
+        public LogItem(
+            string categoryName,
+            string formattedPayload,
+            DateTimeOffset timestamp,
+            LogLevel logLevel,
+            Exception? exception)
+        {
+            this.FormattedPayload = formattedPayload;
+            this.CategoryName = categoryName;
+            this.Timestamp = timestamp;
+            this.LogLevel = logLevel;
+            this.Exception = exception;
+        }
+    }
+
+    public class LogBuffer : ITerminalBuffer
     {
         private readonly int maxItems;
 
@@ -29,17 +58,13 @@ namespace UnityEngine.Terminal
         public LogBuffer(int maxItems)
             => this.maxItems = maxItems;
 
-        public void HandleLog(string message, TerminalLogType type)
-            => this.HandleLog(message, "", type);
+        public void HandleLog(string category, string message, LogLevel level)
+            => this.HandleLog(category, message, null, level);
 
-        public void HandleLog(string message, string stackTrace, TerminalLogType type) 
+        public void HandleLog(string category, string message, Exception exception, LogLevel level)
         {
-            var log = new LogItem {
-                Message = message,
-                StackTrace = stackTrace,
-                Type = type
-            };
-
+            var log = new LogItem(category, message, DateTimeOffset.Now, level, exception);
+            
             this.Logs.Add(log);
 
             if (this.Logs.Count > this.maxItems) 
@@ -48,5 +73,7 @@ namespace UnityEngine.Terminal
 
         public void Clear() 
             => this.Logs.Clear();
+
+        public IReadOnlyCollection<LogItem> GetLogItems() => Logs.AsReadOnly();
     }
 }

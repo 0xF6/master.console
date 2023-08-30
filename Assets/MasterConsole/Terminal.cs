@@ -4,8 +4,8 @@ namespace UnityEngine.Terminal
     using System.Text;
     using UnityEngine;
     using Assertions;
-    using Microsoft.Extensions.Logging.Abstractions;
     using Microsoft.Extensions.Logging;
+    using Profiling;
 
     public enum TerminalState
     {
@@ -24,7 +24,7 @@ namespace UnityEngine.Terminal
         public ILogger<Terminal> Logger => Context.Logger;
         public CommandAutocomplete Autocomplete => Context.Autocomplete;
         public CommandHistory History => Context.History;
-        public LogBuffer Buffer => Context.Buffer;
+        public ITerminalBuffer Buffer => Context.Buffer;
         
         #region private shit
 
@@ -34,6 +34,7 @@ namespace UnityEngine.Terminal
         private bool moveCursor;
         private bool initialOpen;
         private Rect window;
+        private Rect windowOfHints;
         private float currentOpenT;
         private float openTarget;
         private float realWindowSize;
@@ -41,6 +42,7 @@ namespace UnityEngine.Terminal
         private string cachedCommandText;
         private Vector2 scrollPosition;
         private GUIStyle windowStyle;
+        private GUIStyle hintWindowStyle;
         private GUIStyle labelStyle;
         private GUIStyle inputStyle;
         private Texture2D backgroundTexture;
@@ -92,9 +94,10 @@ namespace UnityEngine.Terminal
         public void ToggleState(TerminalState newState) => SetState(state == newState ? TerminalState.Close : newState);
         
         private void OnEnable() 
-            => Application.logMessageReceivedThreaded += HandleUnityLog;
-        private void OnDisable()
-            => Application.logMessageReceivedThreaded -= HandleUnityLog;
+            => Application.logMessageReceivedThreaded += this.HandleUnityLog;
+
+        private void OnDisable() 
+            => Application.logMessageReceivedThreaded -= this.HandleUnityLog;
 
         private void Start()
         {
@@ -132,19 +135,26 @@ namespace UnityEngine.Terminal
 
             HandleOpenness();
             window = GUILayout.Window(88, window, DrawConsole, "", windowStyle);
+            //windowOfHints = GUILayout.Window(89, windowOfHints, DrawHintWindow, "", this.hintWindowStyle);
         }
 
         private void SetupWindow()
         {
             realWindowSize = Screen.height * Settings.MaxHeight / 3;
             window = new Rect(0, currentOpenT - realWindowSize, Screen.width, realWindowSize);
-
+            //windowOfHints = new Rect(0, currentOpenT - realWindowSize, Screen.width, realWindowSize);
             // Set background color
             backgroundTexture = new Texture2D(1, 1);
             backgroundTexture.SetPixel(0, 0, Settings.BackgroundColor);
             backgroundTexture.Apply();
 
             windowStyle = new GUIStyle {
+                normal = { background = backgroundTexture, textColor = Settings.ForegroundColor },
+                padding = new RectOffset(4, 4, 4, 4),
+                font = Settings.ConsoleFont
+            }.DpToPixel();
+
+            hintWindowStyle = new GUIStyle() {
                 normal = { background = backgroundTexture, textColor = Settings.ForegroundColor },
                 padding = new RectOffset(4, 4, 4, 4),
                 font = Settings.ConsoleFont
@@ -186,8 +196,16 @@ namespace UnityEngine.Terminal
             inputStyle.normal.background = inputBackgroundTexture;
         }
 
+        private void DrawHintWindow(int window2D)
+        {
+            GUILayout.BeginVertical();
+            
+            GUILayout.EndVertical();
+        }
+
         private void DrawConsole(int window2D)
         {
+            Profiler.BeginSample("terminal:drawConsole");
             GUILayout.BeginVertical();
 
             scrollPosition = GUILayout.BeginScrollView(scrollPosition, false, false, GUIStyle.none, GUIStyle.none);
@@ -235,9 +253,9 @@ namespace UnityEngine.Terminal
             if (inputFix && commandText.Length > 0)
             {
                 commandText = cachedCommandText; // Otherwise the TextField picks up the ToggleHotkey character event
-                inputFix = false;                  // Prevents checking string Length every draw call
+                inputFix = false;                // Prevents checking string Length every draw call
             }
-
+            
             if (initialOpen)
             {
                 GUI.FocusControl("command_text_field");
@@ -246,15 +264,22 @@ namespace UnityEngine.Terminal
 
             GUILayout.EndHorizontal();
             GUILayout.EndVertical();
+            Profiler.EndSample();
         }
+        
 
         private void DrawLogs()
         {
-            foreach (var log in this.Buffer.Logs)
+            Profiler.BeginSample("terminal:drawLogs");
+            foreach (var log in this.Buffer.GetLogItems())
             {
-                labelStyle.normal.textColor = GetLogColor(log.Type);
-                GUILayout.Label(log.Message, labelStyle.DpToPixel());
+                labelStyle.normal.textColor = GetLogColor(log.LogLevel);
+                GUILayout.Label(
+                    log.CategoryName is null
+                        ? $"{log.FormattedPayload}"
+                        : $"[{log.CategoryName}] {log.FormattedPayload}", this.labelStyle.DpToPixel());
             }
+            Profiler.EndSample();
         }
         
         private void HandleOpenness()
@@ -294,6 +319,7 @@ namespace UnityEngine.Terminal
 
         private void CompleteCommand()
         {
+            Profiler.BeginSample("terminal:completeCommand");
             var headText = commandText;
             var formatWidth = 0;
 
@@ -318,6 +344,7 @@ namespace UnityEngine.Terminal
 
             Logger.LogInformation("{buffer}", logBuffer);
             scrollPosition.y = int.MaxValue;
+            Profiler.EndSample();
         }
 
         private void CursorToEnd()
@@ -331,17 +358,42 @@ namespace UnityEngine.Terminal
             if (this.Buffer is null)
                 return;
 
-            this.Buffer.HandleLog(message, stackTrace, (TerminalLogType)type);
+            if (Settings.DisableUnityDebugLogHook)
+            {
+                this.OnDisable();
+                return;
+            }
+
+            this.Buffer.HandleLog(null, message, Cast(type));
             scrollPosition.y = int.MaxValue;
         }
 
-        private Color GetLogColor(TerminalLogType type) => type switch 
+        private LogLevel Cast(LogType t)
         {
-            TerminalLogType.Message => Settings.ForegroundColor,
-            TerminalLogType.Warning => Settings.WarningColor,
-            TerminalLogType.Input => Settings.InputColor,
-            TerminalLogType.ShellMessage => Settings.ShellColor,
-            _ => Settings.ErrorColor
+            switch (t)
+            {
+                case LogType.Error:
+                    return LogLevel.Error;
+                case LogType.Assert:
+                    return LogLevel.Warning;
+                case LogType.Warning:
+                    return LogLevel.Warning;
+                case LogType.Log:
+                    return LogLevel.Information;
+                case LogType.Exception:
+                    return LogLevel.Critical;
+                default:
+                return LogLevel.None;
+            }
+        }
+
+        private Color GetLogColor(LogLevel type) => type switch 
+        {
+            LogLevel.Information or LogLevel.Debug or LogLevel.Trace => Settings.ForegroundColor,
+            LogLevel.Warning => Settings.WarningColor,
+            LogLevel.Critical or LogLevel.Error => Settings.ErrorColor,
+            LogLevel.None => Settings.InputColor,
+            _ => Settings.ForegroundColor
         };
     }
 }

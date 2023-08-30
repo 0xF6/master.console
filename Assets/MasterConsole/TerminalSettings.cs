@@ -29,8 +29,8 @@
         public Font ConsoleFont;
         [SerializeField]
         public string InputCaret = ">";
-        [SerializeField]
-        public bool RightAlignButtons = false;
+        [SerializeField] 
+        public bool DisableUnityDebugLogHook;
 
         [Header("Theme")]
         [Range(0, 1)]
