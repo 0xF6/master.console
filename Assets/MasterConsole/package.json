@@ -1,7 +1,7 @@
 {
     "name": "com.0xf6.masterconsole",
     "displayName": "MasterConsole",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "unity": "2022.3",
     "description": "Master console is a package that adds the developer console, as well as the necessary functionality for registering commands, variables, etc.",
     "author": "Yuuki Wesp",

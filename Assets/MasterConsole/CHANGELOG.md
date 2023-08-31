@@ -1,3 +1,9 @@
+## 1.4.0
+
+- [fix] print usage when hint is not defined
+- [add] log category support
+- [add] custom log buffer support
+
 ## 1.3.0
 
 - [fix] bumped version...
