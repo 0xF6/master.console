@@ -24,6 +24,7 @@ namespace UnityEngine.Terminal
             ConvertableFromString<float>.Convertor = new Convertable_Float();
             ConvertableFromString<long>.Convertor = new Convertable_Long();
             ConvertableFromString<int>.Convertor = new Convertable_Int();
+            ConvertableFromString<uint>.Convertor = new Convertable_UInt();
             ConvertableFromString<bool>.Convertor = new Convertable_Bool();
             ConvertableFromString<DateTimeOffset>.Convertor = new Convertable_DateTime();
             ConvertableFromString<decimal>.Convertor = new Convertable_Decimal();
@@ -223,6 +224,18 @@ namespace UnityEngine.Terminal
         object IConvertableFromString.ConvertFromString(string str)
             => this.ConvertFromString(str);
     }
+
+    public class Convertable_UInt : IConvertableFromString<uint>
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public uint ConvertFromString(string str)
+            => uint.Parse(str);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        object IConvertableFromString.ConvertFromString(string str)
+            => this.ConvertFromString(str);
+    }
+
     public class Convertable_Long : IConvertableFromString<long>
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

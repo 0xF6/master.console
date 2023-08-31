@@ -1,4 +1,4 @@
-﻿namespace UnityEngine.Terminal
+namespace UnityEngine.Terminal
 {
     using VContainer;
     using System;
@@ -53,9 +53,9 @@
 
     public class DefaultTerminalCommands : CommandSilo
     {
-        private readonly LogBuffer buffer;
+        private readonly ITerminalBuffer buffer;
 
-        public DefaultTerminalCommands(LogBuffer buffer) 
+        public DefaultTerminalCommands(ITerminalBuffer buffer) 
             => this.buffer = buffer;
 
         public override void Create(CommandHandlerContext context)
