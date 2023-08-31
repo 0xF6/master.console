@@ -6,20 +6,18 @@ namespace UnityEngine.Terminal
     using System.Reflection;
     using System.Collections.Generic;
 
-    public unsafe struct CommandInfo
+    public struct CommandInfo
     {
-        public delegate*<int> f;
-        public Func<string[], UniTask> proc;
+        public Func<string[], UniTask> Procedure;
         public int MaxArgs;
         public int MinArgs;
-        public string help;
-        public string hint;
+        public string Help;
+        public string Hint;
     }
     
     public class CommandShell
     {
         private readonly CommandHandlerContext handlerCtx;
-        public string IssuedErrorMessage { get; private set; }
 
         public Dictionary<string, CommandInfo> Commands { get; } = new();
 
@@ -32,16 +30,12 @@ namespace UnityEngine.Terminal
         /// </summary>
         public void RegisterCommands()
         {
-            var rejectedCommands = new Dictionary<string, CommandInfo>();
-            
             foreach (var (commandName, data) in handlerCtx.GetCommands())
                 this.AddCommand(commandName, x => data.Activate(x), data.ArgumentCaster.Count,
                     data.ArgumentCaster.Count, data.Help, data.Hint);
 
             foreach (var (commandName, data) in handlerCtx.GetVariables())
                 this.AddCommand(commandName, x => data.Activate(x), 0, 1, data.Help, data.Hint);
-
-            this.HandleRejectedCommands(rejectedCommands);
         }
 
         public void AddDynamicCommand(string name, CommandHandlerContext.CommandExecutionData data) 
@@ -50,10 +44,13 @@ namespace UnityEngine.Terminal
         /// <summary>
         /// Parses an input line into a command and runs that command.
         /// </summary>
-        public void RunCommand(string line)
+        public bool RunCommand(string line, out string error)
         {
-            string remaining = line;
-            this.IssuedErrorMessage = null;
+            error = null;
+            if (string.IsNullOrEmpty(line))
+                return false;
+            
+            var remaining = line;
             var arguments = new List<string>();
             while (remaining != "")
             {
@@ -66,12 +63,9 @@ namespace UnityEngine.Terminal
             }
 
             if (arguments.Count == 0)
-            {
-                // Nothing to run
-                return;
-            }
+                return false;
 
-            var commandName = arguments[0].ToUpperInvariant();
+            var commandName = arguments[0].ToLowerInvariant();
             arguments.RemoveAt(0); // Remove command name from arguments
 
             if (commandName.StartsWith('-') || commandName.StartsWith("+"))
@@ -82,16 +76,17 @@ namespace UnityEngine.Terminal
 
             if (!this.Commands.ContainsKey(commandName))
             {
-                this.IssueErrorMessage("Command '{0}' could not be found", commandName.ToLowerInvariant());
-                return;
+                error = $"Command '{commandName}' could not be found";
+                return false;
             }
 
-            this.RunCommand(commandName, arguments.ToArray());
+            return this.RunCommand(commandName, arguments.ToArray(), out error);
         }
 
-        public void RunCommand(string commandName, string[] args)
+        public bool RunCommand(string commandName, string[] args, out string error)
         {
-            var command = this.Commands[commandName];
+            error = null;
+            var command = this.Commands[commandName.ToLowerInvariant()];
             var argCount = args.Length;
             string errorMessage = null;
             var requiredArg = 0;
@@ -112,32 +107,24 @@ namespace UnityEngine.Terminal
             {
                 var pluralFix = requiredArg == 1 ? "" : "s";
 
-                this.IssueErrorMessage(
-                    "{0} requires {1} {2} argument{3}",
-                    commandName,
-                    errorMessage,
-                    requiredArg,
-                    pluralFix
-                );
+                error = $"{commandName} requires {errorMessage} {requiredArg} argument {pluralFix}";
 
-                if (!string.IsNullOrEmpty(command.hint)) 
-                    this.IssuedErrorMessage += $"\n    -> Usage: {command.hint}";
+                if (!string.IsNullOrEmpty(command.Hint))
+                    error += $"\n    -> Usage: {command.Hint}";
 
-                return;
+                return false;
             }
 
-            command.proc(args).Forget();
+            command.Procedure(args).Forget();
+            return true;
         }
 
         public void AddCommand(string name, CommandInfo info)
         {
-            name = name.ToUpper();
+            name = name.ToLowerInvariant();
 
             if (this.Commands.ContainsKey(name))
-            {
-                this.IssueErrorMessage("Command {0} is already defined.", name);
-                return;
-            }
+                throw new Exception($"Command {name} is already defined.");
 
             this.Commands.Add(name, info);
         }
@@ -146,70 +133,14 @@ namespace UnityEngine.Terminal
         {
             var info = new CommandInfo()
             {
-                proc = proc,
+                Procedure = proc,
                 MinArgs = minArgs,
                 MaxArgs = maxArgs,
-                help = help,
-                hint = hint
+                Help = help,
+                Hint = hint
             };
 
             this.AddCommand(name, info);
-        }
-        
-        public void IssueErrorMessage(string format, params object[] message)
-        {
-            this.IssuedErrorMessage = string.Format(format, message);
-        }
-
-        private string InferCommandName(string methodName)
-        {
-            string commandName;
-            int index = methodName.IndexOf("COMMAND", StringComparison.CurrentCultureIgnoreCase);
-
-            // Method is prefixed, suffixed with, or contains "COMMAND".
-            commandName = index >= 0 ? methodName.Remove(index, 7) : methodName;
-
-            return commandName;
-        }
-
-        private string InferFrontCommandName(string method_name)
-        {
-            int index = method_name.IndexOf("FRONT", StringComparison.CurrentCultureIgnoreCase);
-            return index >= 0 ? method_name.Remove(index, 5) : null;
-        }
-
-        private void HandleRejectedCommands(Dictionary<string, CommandInfo> rejectedCommands)
-        {
-            foreach (var command in rejectedCommands)
-            {
-                if (this.Commands.ContainsKey(command.Key))
-                {
-                    this.Commands[command.Key] = new CommandInfo()
-                    {
-                        proc = this.Commands[command.Key].proc,
-                        MinArgs = command.Value.MinArgs,
-                        MaxArgs = command.Value.MaxArgs,
-                        help = command.Value.help
-                    };
-                }
-                else
-                {
-                    this.IssueErrorMessage("{0} is missing a front command.", command);
-                }
-            }
-        }
-
-        private CommandInfo CommandFromParamInfo(ParameterInfo[] parameters, string help)
-        {
-            var optionalArgs = parameters.Count(param => param.IsOptional);
-
-            return new CommandInfo()
-            {
-                proc = null,
-                MinArgs = parameters.Length - optionalArgs,
-                MaxArgs = parameters.Length,
-                help = help
-            };
         }
 
         private string[] EatArgument(ref string s)

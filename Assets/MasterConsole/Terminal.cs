@@ -19,12 +19,12 @@ namespace UnityEngine.Terminal
         [VContainer.Inject]
         internal TerminalContext Context { get; set; }
         
-        public TerminalSettings Settings => Context.Settings;
-        public CommandShell Shell => Context.Shell;
-        public ILogger<Terminal> Logger => Context.Logger;
-        public CommandAutocomplete Autocomplete => Context.Autocomplete;
-        public CommandHistory History => Context.History;
-        public ITerminalBuffer Buffer => Context.Buffer;
+        public TerminalSettings Settings => this.Context.Settings;
+        public CommandShell Shell => this.Context.Shell;
+        public ILogger<Terminal> Logger => this.Context.Logger;
+        public CommandAutocomplete Autocomplete => this.Context.Autocomplete;
+        public CommandHistory History => this.Context.History;
+        public ITerminalBuffer Buffer => this.Context.Buffer;
         
         #region private shit
 
@@ -50,48 +50,45 @@ namespace UnityEngine.Terminal
 
         #endregion
 
-
-        public bool IssuedError => Context.Shell.IssuedErrorMessage != null;
-
-        public bool IsClosed => state == TerminalState.Close && Mathf.Approximately(currentOpenT, openTarget);
+        public bool IsClosed => this.state == TerminalState.Close && Mathf.Approximately(this.currentOpenT, this.openTarget);
         
         public void SetState(TerminalState newState)
         {
-            inputFix = true;
-            cachedCommandText = commandText;
-            commandText = "";
+            this.inputFix = true;
+            this.cachedCommandText = this.commandText;
+            this.commandText = "";
 
             switch (newState)
             {
                 case TerminalState.Close:
-                    openTarget = 0;
+                    this.openTarget = 0;
                     break;
                 case TerminalState.OpenSmall:
                 {
-                    openTarget = Screen.height * Settings.MaxHeight * Settings.SmallTerminalRatio;
-                    if (currentOpenT > openTarget)
+                    this.openTarget = Screen.height * this.Settings.MaxHeight * this.Settings.SmallTerminalRatio;
+                    if (this.currentOpenT > this.openTarget)
                     {
                         // Prevent resizing from OpenFull to OpenSmall if window y position
                         // is greater than OpenSmall's target
-                        openTarget = 0;
-                        state = TerminalState.Close;
+                        this.openTarget = 0;
+                        this.state = TerminalState.Close;
                         return;
                     }
 
-                    realWindowSize = openTarget;
-                    scrollPosition.y = int.MaxValue;
+                    this.realWindowSize = this.openTarget;
+                    this.scrollPosition.y = int.MaxValue;
                     break;
                 }
                 default:
-                    realWindowSize = Screen.height * Settings.MaxHeight;
-                    openTarget = realWindowSize;
+                    this.realWindowSize = Screen.height * this.Settings.MaxHeight;
+                    this.openTarget = this.realWindowSize;
                     break;
             }
 
-            state = newState;
+            this.state = newState;
         }
 
-        public void ToggleState(TerminalState newState) => SetState(state == newState ? TerminalState.Close : newState);
+        public void ToggleState(TerminalState newState) => this.SetState(this.state == newState ? TerminalState.Close : newState);
         
         private void OnEnable() 
             => Application.logMessageReceivedThreaded += this.HandleUnityLog;
@@ -101,99 +98,99 @@ namespace UnityEngine.Terminal
 
         private void Start()
         {
-            commandText = "";
-            cachedCommandText = commandText;
-            Assert.AreNotEqual(Settings.ToggleHotkey.ToLower(), "return", "Return is not a valid ToggleHotkey");
+            this.commandText = "";
+            this.cachedCommandText = this.commandText;
+            Assert.AreNotEqual(this.Settings.ToggleHotkey.ToLower(), "return", "Return is not a valid ToggleHotkey");
 
-            SetupWindow();
-            SetupInput();
-            SetupLabels();
+            this.SetupWindow();
+            this.SetupInput();
+            this.SetupLabels();
             
 
             this.Context.Shell.RegisterCommands();
-
-            if (IssuedError) this.Logger.LogError("Error: {IssuedErrorMessage}", this.Shell.IssuedErrorMessage);
-
-            foreach (var command in this.Shell.Commands) this.Autocomplete.Register(command.Key);
+            
+            foreach (var command in this.Shell.Commands) 
+                this.Autocomplete.Register(command.Key);
         }
 
         private void OnGUI()
         {
-            if (Event.current.Equals(Event.KeyboardEvent(Settings.ToggleHotkey)))
+            if (Event.current.Equals(Event.KeyboardEvent(this.Settings.ToggleHotkey)))
             {
-                SetState(TerminalState.OpenSmall);
-                initialOpen = true;
+                this.SetState(TerminalState.OpenSmall);
+                this.initialOpen = true;
             }
-            else if (Event.current.Equals(Event.KeyboardEvent(Settings.ToggleFullHotkey)))
+            else if (Event.current.Equals(Event.KeyboardEvent(this.Settings.ToggleFullHotkey)))
             {
-                SetState(TerminalState.OpenFull);
-                initialOpen = true;
+                this.SetState(TerminalState.OpenFull);
+                this.initialOpen = true;
             }
 
-            if (IsClosed)
+            if (this.IsClosed)
                 return;
 
-            HandleOpenness();
-            window = GUILayout.Window(88, window, DrawConsole, "", windowStyle);
+            this.HandleOpenness();
+            this.window = GUILayout.Window(88, this.window, this.DrawConsole, "", this.windowStyle);
             //windowOfHints = GUILayout.Window(89, windowOfHints, DrawHintWindow, "", this.hintWindowStyle);
         }
 
         private void SetupWindow()
         {
-            realWindowSize = Screen.height * Settings.MaxHeight / 3;
-            window = new Rect(0, currentOpenT - realWindowSize, Screen.width, realWindowSize);
+            this.realWindowSize = Screen.height * this.Settings.MaxHeight / 3;
+            this.window = new Rect(0, this.currentOpenT - this.realWindowSize, Screen.width, this.realWindowSize);
             //windowOfHints = new Rect(0, currentOpenT - realWindowSize, Screen.width, realWindowSize);
             // Set background color
-            backgroundTexture = new Texture2D(1, 1);
-            backgroundTexture.SetPixel(0, 0, Settings.BackgroundColor);
-            backgroundTexture.Apply();
+            this.backgroundTexture = new Texture2D(1, 1);
+            this.backgroundTexture.SetPixel(0, 0, this.Settings.BackgroundColor);
+            this.backgroundTexture.Apply();
 
-            windowStyle = new GUIStyle {
-                normal = { background = backgroundTexture, textColor = Settings.ForegroundColor },
+            this.windowStyle = new GUIStyle {
+                normal = { background = this.backgroundTexture, textColor = this.Settings.ForegroundColor },
                 padding = new RectOffset(4, 4, 4, 4),
-                font = Settings.ConsoleFont
+                font = this.Settings.ConsoleFont
             }.DpToPixel();
 
-            hintWindowStyle = new GUIStyle() {
-                normal = { background = backgroundTexture, textColor = Settings.ForegroundColor },
+            this.hintWindowStyle = new GUIStyle() {
+                normal = { background = this.backgroundTexture, textColor = this.Settings.ForegroundColor },
                 padding = new RectOffset(4, 4, 4, 4),
-                font = Settings.ConsoleFont
+                font = this.Settings.ConsoleFont
             }.DpToPixel();
         }
 
-        private void SetupLabels() => labelStyle = new GUIStyle 
+        private void SetupLabels() =>
+            this.labelStyle = new GUIStyle 
         {
-            font = Settings.ConsoleFont, 
-            normal = { textColor = Settings.ForegroundColor }, 
+            font = this.Settings.ConsoleFont, 
+            normal = { textColor = this.Settings.ForegroundColor }, 
             wordWrap = true,
-            fontSize = Settings.FontSize
+            fontSize = this.Settings.FontSize
         }.DpToPixel();
 
         private void SetupInput()
         {
-            inputStyle = new GUIStyle
+            this.inputStyle = new GUIStyle
             {
                 padding = new RectOffset(4, 4, 4, 4).DpToPixel(),
-                font = Settings.ConsoleFont,
-                fixedHeight = (Settings.FontSize * 1.2f) * 1.6f,
+                font = this.Settings.ConsoleFont,
+                fixedHeight = (this.Settings.FontSize * 1.2f) * 1.6f,
                 normal =
                 {
-                    textColor = Settings.InputColor
+                    textColor = this.Settings.InputColor
                 },
-                fontSize = (int)(Settings.FontSize * 1.2f)
+                fontSize = (int)(this.Settings.FontSize * 1.2f)
             }.DpToPixel();
 
             var darkBackground = new Color
             {
-                r = Settings.BackgroundColor.r - Settings.InputContrast, g = Settings.BackgroundColor.g - Settings.InputContrast,
-                b = Settings.BackgroundColor.b - Settings.InputContrast,
-                a = Settings.InputAlpha
+                r = this.Settings.BackgroundColor.r - this.Settings.InputContrast, g = this.Settings.BackgroundColor.g - this.Settings.InputContrast,
+                b = this.Settings.BackgroundColor.b - this.Settings.InputContrast,
+                a = this.Settings.InputAlpha
             };
 
-            inputBackgroundTexture = new Texture2D(1, 1);
-            inputBackgroundTexture.SetPixel(0, 0, darkBackground);
-            inputBackgroundTexture.Apply();
-            inputStyle.normal.background = inputBackgroundTexture;
+            this.inputBackgroundTexture = new Texture2D(1, 1);
+            this.inputBackgroundTexture.SetPixel(0, 0, darkBackground);
+            this.inputBackgroundTexture.Apply();
+            this.inputStyle.normal.background = this.inputBackgroundTexture;
         }
 
         private void DrawHintWindow(int window2D)
@@ -208,58 +205,58 @@ namespace UnityEngine.Terminal
             Profiler.BeginSample("terminal:drawConsole");
             GUILayout.BeginVertical();
 
-            scrollPosition = GUILayout.BeginScrollView(scrollPosition, false, false, GUIStyle.none, GUIStyle.none);
+            this.scrollPosition = GUILayout.BeginScrollView(this.scrollPosition, false, false, GUIStyle.none, GUIStyle.none);
             GUILayout.FlexibleSpace();
-            DrawLogs();
+            this.DrawLogs();
             GUILayout.EndScrollView();
 
-            if (moveCursor)
+            if (this.moveCursor)
             {
-                CursorToEnd();
-                moveCursor = false;
+                this.CursorToEnd();
+                this.moveCursor = false;
             }
 
             if (Event.current.Equals(Event.KeyboardEvent("escape")))
-                SetState(TerminalState.Close);
+                this.SetState(TerminalState.Close);
             else if (Event.current.Equals(Event.KeyboardEvent("return"))
                      || Event.current.Equals(Event.KeyboardEvent("[enter]")))
-                EnterCommand();
+                this.EnterCommand();
             else if (Event.current.Equals(Event.KeyboardEvent("up")))
             {
-                commandText = this.History.Previous();
-                moveCursor = true;
+                this.commandText = this.History.Previous();
+                this.moveCursor = true;
             }
             else if (Event.current.Equals(Event.KeyboardEvent("down")))
-                commandText = this.History.Next();
-            else if (Event.current.Equals(Event.KeyboardEvent(Settings.ToggleHotkey)))
-                ToggleState(TerminalState.OpenSmall);
-            else if (Event.current.Equals(Event.KeyboardEvent(Settings.ToggleFullHotkey)))
-                ToggleState(TerminalState.OpenFull);
+                this.commandText = this.History.Next();
+            else if (Event.current.Equals(Event.KeyboardEvent(this.Settings.ToggleHotkey)))
+                this.ToggleState(TerminalState.OpenSmall);
+            else if (Event.current.Equals(Event.KeyboardEvent(this.Settings.ToggleFullHotkey)))
+                this.ToggleState(TerminalState.OpenFull);
             else if (Event.current.Equals(Event.KeyboardEvent("tab")))
             {
-                CompleteCommand();
-                moveCursor = true; // Wait till next draw call
+                this.CompleteCommand();
+                this.moveCursor = true; // Wait till next draw call
             }
 
             GUILayout.BeginHorizontal();
 
-            if (!string.Equals(Settings.InputCaret, "", StringComparison.Ordinal))
-                GUILayout.Label(Settings.InputCaret, inputStyle,
-                    GUILayout.Width(Settings.ConsoleFont.fontSize));
+            if (!string.Equals(this.Settings.InputCaret, "", StringComparison.Ordinal))
+                GUILayout.Label(this.Settings.InputCaret, this.inputStyle,
+                    GUILayout.Width(this.Settings.ConsoleFont.fontSize));
 
             GUI.SetNextControlName("command_text_field");
-            commandText = GUILayout.TextField(commandText, inputStyle);
+            this.commandText = GUILayout.TextField(this.commandText, this.inputStyle);
 
-            if (inputFix && commandText.Length > 0)
+            if (this.inputFix && this.commandText.Length > 0)
             {
-                commandText = cachedCommandText; // Otherwise the TextField picks up the ToggleHotkey character event
-                inputFix = false;                // Prevents checking string Length every draw call
+                this.commandText = this.cachedCommandText; // Otherwise the TextField picks up the ToggleHotkey character event
+                this.inputFix = false;                // Prevents checking string Length every draw call
             }
             
-            if (initialOpen)
+            if (this.initialOpen)
             {
                 GUI.FocusControl("command_text_field");
-                initialOpen = false;
+                this.initialOpen = false;
             }
 
             GUILayout.EndHorizontal();
@@ -273,7 +270,7 @@ namespace UnityEngine.Terminal
             Profiler.BeginSample("terminal:drawLogs");
             foreach (var log in this.Buffer.GetLogItems())
             {
-                labelStyle.normal.textColor = GetLogColor(log.LogLevel);
+                this.labelStyle.normal.textColor = this.GetLogColor(log.LogLevel);
                 GUILayout.Label(
                     log.CategoryName is null
                         ? $"{log.FormattedPayload}"
@@ -284,49 +281,50 @@ namespace UnityEngine.Terminal
         
         private void HandleOpenness()
         {
-            var dt = Settings.ToggleSpeed * Time.unscaledDeltaTime;
+            var dt = this.Settings.ToggleSpeed * Time.unscaledDeltaTime;
 
-            if (currentOpenT < openTarget)
+            if (this.currentOpenT < this.openTarget)
             {
-                currentOpenT += dt;
-                if (currentOpenT > openTarget) currentOpenT = openTarget;
+                this.currentOpenT += dt;
+                if (this.currentOpenT > this.openTarget) this.currentOpenT = this.openTarget;
             }
-            else if (currentOpenT > openTarget)
+            else if (this.currentOpenT > this.openTarget)
             {
-                currentOpenT -= dt;
-                if (currentOpenT < openTarget) currentOpenT = openTarget;
+                this.currentOpenT -= dt;
+                if (this.currentOpenT < this.openTarget) this.currentOpenT = this.openTarget;
             }
             else
             {
-                if (inputFix) inputFix = false;
+                if (this.inputFix) this.inputFix = false;
                 return; // Already at target
             }
 
-            window = new Rect(0, currentOpenT - realWindowSize, Screen.width, realWindowSize);
+            this.window = new Rect(0, this.currentOpenT - this.realWindowSize, Screen.width, this.realWindowSize);
         }
 
         private void EnterCommand()
         {
-            this.Logger.LogInformation("{cmd}", commandText);
-            this.Shell.RunCommand(commandText);
-            this.History.Push(commandText);
+            this.Buffer.HandleLog(">", this.commandText, LogLevel.None);
+            var isSuccess = this.Shell.RunCommand(this.commandText, out var error);
+            this.History.Push(this.commandText);
 
-            if (IssuedError) this.Logger.LogError("Error: {0}", this.Shell.IssuedErrorMessage);
+            if (!isSuccess && !string.IsNullOrEmpty(error)) 
+                this.Logger.LogError(error);
 
-            commandText = "";
-            scrollPosition.y = int.MaxValue;
+            this.commandText = "";
+            this.scrollPosition.y = int.MaxValue;
         }
 
         private void CompleteCommand()
         {
             Profiler.BeginSample("terminal:completeCommand");
-            var headText = commandText;
+            var headText = this.commandText;
             var formatWidth = 0;
 
             var completionBuffer = this.Autocomplete.Complete(ref headText, ref formatWidth, out var disposer);
             var completionLength = completionBuffer.Length;
 
-            if (completionLength != 0) commandText = headText;
+            if (completionLength != 0) this.commandText = headText;
 
             if (completionLength <= 1)
                 return;
@@ -342,15 +340,15 @@ namespace UnityEngine.Terminal
 
             disposer.Dispose();
 
-            Logger.LogInformation("{buffer}", logBuffer);
-            scrollPosition.y = int.MaxValue;
+            this.Logger.LogInformation("{buffer}", logBuffer);
+            this.scrollPosition.y = int.MaxValue;
             Profiler.EndSample();
         }
 
         private void CursorToEnd()
         {
-            editorState ??= (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
-            editorState.MoveCursorToPosition(new Vector2(999, 999));
+            this.editorState ??= (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
+            this.editorState.MoveCursorToPosition(new Vector2(999, 999));
         }
 
         private void HandleUnityLog(string message, string stackTrace, LogType type)
@@ -358,14 +356,14 @@ namespace UnityEngine.Terminal
             if (this.Buffer is null)
                 return;
 
-            if (Settings.DisableUnityDebugLogHook)
+            if (this.Settings.DisableUnityDebugLogHook)
             {
                 this.OnDisable();
                 return;
             }
 
-            this.Buffer.HandleLog(null, message, Cast(type));
-            scrollPosition.y = int.MaxValue;
+            this.Buffer.HandleLog(null, message, this.Cast(type));
+            this.scrollPosition.y = int.MaxValue;
         }
 
         private LogLevel Cast(LogType t)
@@ -389,11 +387,11 @@ namespace UnityEngine.Terminal
 
         private Color GetLogColor(LogLevel type) => type switch 
         {
-            LogLevel.Information or LogLevel.Debug or LogLevel.Trace => Settings.ForegroundColor,
-            LogLevel.Warning => Settings.WarningColor,
-            LogLevel.Critical or LogLevel.Error => Settings.ErrorColor,
-            LogLevel.None => Settings.InputColor,
-            _ => Settings.ForegroundColor
+            LogLevel.Information or LogLevel.Debug or LogLevel.Trace => this.Settings.ForegroundColor,
+            LogLevel.Warning => this.Settings.WarningColor,
+            LogLevel.Critical or LogLevel.Error => this.Settings.ErrorColor,
+            LogLevel.None => this.Settings.InputColor,
+            _ => this.Settings.ForegroundColor
         };
     }
 }
