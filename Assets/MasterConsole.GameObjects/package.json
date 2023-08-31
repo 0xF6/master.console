@@ -12,6 +12,7 @@
     "dependencies": {
         "com.cysharp.unitask": "2.3.3",
         "org.nuget.microsoft.extensions.logging.abstractions": "7.0.1",
-        "org.nuget.system.runtime.compilerservices.unsafe": "6.0.0"
+        "org.nuget.system.runtime.compilerservices.unsafe": "6.0.0",
+		"com.unity.selection-groups": "0.9.3-preview"
     }
 }
